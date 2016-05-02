@@ -53,6 +53,10 @@ type TestStartCallbackObject struct {
 	module string `js:"module"`
 }
 
+func (qa QUnitAssert) Expect(amount int) *js.Object {
+	return qa.Call("expect", amount)
+}
+
 func (qa QUnitAssert) DeepEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("deepEqual", actual, expected, message).Bool()
 }
@@ -89,12 +93,15 @@ func (qa QUnitAssert) StrictEqual(actual interface{}, expected interface{}, mess
 	return qa.Call("strictEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) ThrowsExpected(block func() interface{}, expected interface{}, message string) *js.Object {
-	return qa.Call("throwsExpected", block, expected, message)
-}
-
-func (qa QUnitAssert) Throws(block func() interface{}, message string) *js.Object {
-	return qa.Call("throws", block, message)
+func (qa QUnitAssert) Throws(block func() interface{}, args ...interface{}) *js.Object {
+	switch len(args) {
+	case 1:
+		return qa.Call("throws", block, args[0])
+	case 2:
+		return qa.Call("throws", block, args[0], args[1])
+	default:
+		panic("Throws takes 2-3 arguments")
+	}
 }
 
 func (qa QUnitAssert) Async() func() {
@@ -194,10 +201,6 @@ func AsyncTest(name string, testFn func() interface{}) *js.Object {
 	})
 	return t
 }
-func Expect(amount int) *js.Object {
-	return js.Global.Get("QUnit").Call("expect", amount)
-}
-
 func Equiv(a interface{}, b interface{}) *js.Object {
 	return js.Global.Get("QUnit").Call("equip", a, b)
 }
